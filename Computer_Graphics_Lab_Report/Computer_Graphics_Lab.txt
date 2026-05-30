@@ -1,0 +1,1154 @@
+\documentclass[12pt, a4paper]{article}
+
+% Packages
+\usepackage[utf8]{inputenc}
+\usepackage{geometry}
+\geometry{a4paper, margin=1in}
+\usepackage{graphicx}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{amsmath}
+
+% Setup for C code formatting
+\lstset{
+    language=C,
+    basicstyle=\ttfamily\footnotesize,
+    keywordstyle=\color{blue},
+    commentstyle=\color{green!50!black},
+    stringstyle=\color{red},
+    breaklines=true,
+    frame=single,
+    showstringspaces=false,
+    numbers=none
+}
+
+% Hyperlink setup
+\hypersetup{
+    colorlinks=true,
+    linkcolor=black,
+    filecolor=magenta,      
+    urlcolor=cyan,
+    pdftitle={Computer Graphics Lab Report},
+}
+
+\begin{document}
+
+% --------------------------------------------------------
+% TITLE PAGE
+% --------------------------------------------------------
+\begin{titlepage}
+    \begin{center}
+        \vspace*{2cm}
+        
+        \Huge\textbf{COMPUTER GRAPHICS LAB REPORT}
+        
+        \vspace{1.5cm}
+        
+        \Large\textbf{Course Title:} Computer Graphics Lab \\
+        \textbf{Course Code:} 0613-CSE-4103
+        
+        \vspace{3cm}
+        
+        \textbf{Submitted By:} \\
+        \textbf{Student Name:} Rayhan Kabir Dodi \\
+        \textbf{Student ID:} 23100124 \\
+        \textbf{Department:} Computer Science \& Engineering \\
+        \textbf{University:} R.P. Shaha University
+        
+        \vspace{3cm}
+        
+        \textbf{Submitted To:} \\
+        \textbf{Tanjina Akter} \\
+        Lecturer, R.P.S.U Department of C.S.E
+        
+        \vspace{2cm}
+        
+        \textbf{Submission Date:} 31/May/2026
+        
+    \end{center}
+\end{titlepage}
+
+\newpage
+\tableofcontents
+\newpage
+
+% --------------------------------------------------------
+% INTRODUCTION
+% --------------------------------------------------------
+\section{Introduction}
+
+\subsection{What is Computer Graphics?}
+Computer graphics is a sub-field of computer science that studies methods for digitally synthesizing and manipulating visual content. It encompasses the creation, storage, and manipulation of models and images of objects. Through computational algorithms, mathematical principles, and specialized hardware, computer graphics translates abstract programmatic and numerical concepts into human-readable visual formats on display devices. Key components include rendering (2D and 3D scenes), geometric transformations, rasterization, clipping, and shading.
+
+\subsection{Importance of Computer Graphics}
+The significance of computer graphics spans numerous industries and modern technologies. It is the foundational technology behind graphical user interfaces (GUIs), enabling intuitive interaction with software. In the medical field, it powers the visualization of complex data, such as rendering MRI and CT scans for diagnostics. Engineering and architecture rely heavily on Computer-Aided Design (CAD) for modeling and simulating physical structures. Furthermore, the entertainment industry---including video games, animation, and virtual reality---depends entirely on advanced rendering techniques to create immersive digital experiences.
+
+\subsection{Objectives of the Laboratory Work}
+These laboratory exercises are designed to provide practical implementation of foundational graphics algorithms and techniques. The primary objectives of this lab are:
+\begin{itemize}
+    \item To gain hands-on experience with foundational graphics APIs (such as the BGI library in C).
+    \item To implement primitive drawing algorithms (line generation, circle generation) and understand their underlying mathematical logic (e.g., DDA, Bresenham's, Midpoint).
+    \item To apply geometric transformations mathematically, including translation, rotation, scaling, and shearing.
+    \item To implement and understand region-filling algorithms (Flood Fill, Boundary Fill) and connectivity concepts.
+    \item To generate complex curves (Cubic B\'{e}zier) and implement double-buffered animations (page flipping) for dynamic scenes.
+\end{itemize}
+
+\newpage
+
+% --------------------------------------------------------
+% EXPERIMENT 1
+% --------------------------------------------------------
+\section{Experiment 1: DDA and Bresenham's Line Drawing Algorithms}
+
+\subsection{Objective}
+To understand and implement the Digital Differential Analyzer (DDA) and Bresenham's Line Drawing Algorithms for rasterizing straight line segments on a digital screen.
+
+\subsection{Theory/Background}
+\textbf{DDA Algorithm:} DDA draws a line by incrementally stepping one pixel at a time along the dominant axis (the axis with the larger span). The other axis advances by a fractional increment each step, derived from the ratio $dy/dx$ or $dx/dy$. Rounding via $+0.5$ maps each floating-point position to the nearest pixel.
+
+\textbf{Bresenham's Algorithm:} Bresenham's algorithm avoids floating-point arithmetic by maintaining an integer ``decision parameter'' ($d$) that tracks the cumulative error between the ideal line and the pixel grid. At each step along the dominant axis, $d$ determines whether the minor axis should advance or stay. It works with absolute deltas and derives unit step signs from the original direction, swapping axes for steep lines where $|dy| > |dx|$.
+
+\subsection{Source Code}
+\textbf{Experiment 1A: DDA Line Drawing Algorithm}
+\begin{lstlisting}[language=C]
+#include <stdio.h>
+#include <math.h>
+#include <graphics.h>
+#include <conio.h>
+
+#define BGI_PATH   "C:\\TURBOC3\\BGI"
+#define LINE_COLOR WHITE
+
+void drawLineDDA(float x1, float y1, float x2, float y2)
+{
+    float dx    = x2 - x1;
+    float dy    = y2 - y1;
+    float steps = (fabs(dx) > fabs(dy)) ? fabs(dx) : fabs(dy);
+    if (steps == 0) {
+        putpixel((int)(x1+0.5f),(int)(y1+0.5f), LINE_COLOR);
+        return;
+    }
+    float xInc = dx / steps;
+    float yInc = dy / steps;
+    float x = x1, y = y1;
+    int i;
+    for (i = 0; i <= (int)steps; i++) {
+        putpixel((int)(x+0.5f),(int)(y+0.5f), LINE_COLOR);
+        x += xInc;
+        y += yInc;
+    }
+}
+
+int main(void)
+{
+    float x1, y1, x2, y2;
+    printf("=== DDA Line Drawing Algorithm ===\n\n");
+    printf("Enter starting point (x1 y1) : "); scanf("%f %f",&x1,&y1);
+    printf("Enter ending   point (x2 y2) : "); scanf("%f %f",&x2,&y2);
+    int gd=DETECT, gm;
+    initgraph(&gd,&gm,BGI_PATH);
+    drawLineDDA(x1,y1,x2,y2);
+    getch(); closegraph();
+    return 0;
+}
+\end{lstlisting}
+
+\textbf{Experiment 1B: Bresenham's Line Drawing Algorithm}
+\begin{lstlisting}[language=C]
+#include <stdio.h>
+#include <stdlib.h>
+#include <graphics.h>
+#include <conio.h>
+
+#define BGI_PATH   "C:\\TURBOC3\\BGI"
+#define LINE_COLOR WHITE
+#define SIGN(v)  (((v)>0)-((v)<0))
+
+void drawLineBresenham(int x1, int y1, int x2, int y2)
+{
+    int absDx=abs(x2-x1), absDy=abs(y2-y1);
+    int xStep=SIGN(x2-x1), yStep=SIGN(y2-y1);
+    int steep=(absDy>absDx), tmp, d, x=x1, y=y1, i;
+    if (steep) {
+        tmp=absDx; absDx=absDy; absDy=tmp;
+        tmp=xStep; xStep=yStep; yStep=tmp;
+    }
+    d = 2*absDy - absDx;
+    for (i=0; i<=absDx; i++) {
+        steep ? putpixel(y,x,LINE_COLOR) : putpixel(x,y,LINE_COLOR);
+        if (d>=0) { y+=yStep; d+=2*(absDy-absDx); }
+        else        d+=2*absDy;
+        x+=xStep;
+    }
+}
+
+int main(void)
+{
+    int x1,y1,x2,y2;
+    printf("=== Bresenham's Line Drawing Algorithm ===\n\n");
+    printf("Enter starting point (x1 y1) : "); scanf("%d %d",&x1,&y1);
+    printf("Enter ending   point (x2 y2) : "); scanf("%d %d",&x2,&y2);
+    int gd=DETECT, gm;
+    initgraph(&gd,&gm,BGI_PATH);
+    drawLineBresenham(x1,y1,x2,y2);
+    getch(); closegraph();
+    return 0;
+}
+\end{lstlisting}
+
+\subsection{Output}
+\begin{verbatim}
+=== DDA Line Drawing Algorithm ===
+Enter starting point (x1 y1): 100 100
+Enter ending point (x2 y2): 200 200
+
+=== Bresenham's Line Drawing Algorithm ===
+Enter starting point (x1 y1): 100 100
+Enter ending point (x2 y2): 200 200
+\end{verbatim}
+
+% -------------------------------------------------------
+% TO ADD YOUR IMAGE: save screenshot as exp1a_dda.png
+% and exp1b_bresenham.png in the SAME folder as this .tex
+% -------------------------------------------------------
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.6\textwidth]{exp1a_dda.png}
+    \vspace{0.4cm}
+    \includegraphics[width=0.6\textwidth]{exp1b_bresenham.png}
+    \caption{Outputs for DDA (top) and Bresenham (bottom) Line Drawing Algorithms}
+\end{figure}
+
+\subsection{Discussion}
+The outputs successfully render a straight diagonal line segment from pixel coordinates (100,100) to (200,200) using both algorithmic approaches. DDA uses floating-point additions while Bresenham uses purely integer arithmetic.
+
+\subsection{Conclusion}
+Both algorithms effectively rasterize line segments. Bresenham's approach is computationally superior due to its avoidance of floating-point arithmetic.
+
+\newpage
+
+% --------------------------------------------------------
+% EXPERIMENT 2
+% --------------------------------------------------------
+\section{Experiment 2: Midpoint Line Drawing Algorithm}
+
+\subsection{Objective}
+To implement the Midpoint Line Drawing Algorithm for rasterizing straight lines by evaluating an implicit line equation at the midpoint between candidate pixels.
+
+\subsection{Theory/Background}
+The Midpoint algorithm decides which of two candidate pixels to plot by evaluating the implicit line equation:
+\begin{equation}
+F(x, y) = dy \cdot x - dx \cdot y + dx \cdot y_1 - dy \cdot x_1
+\end{equation}
+at the midpoint between them. The decision parameter is scaled by 2 to avoid fractional arithmetic. Initial parameter: $d = 2 \cdot |dy| - |dx|$.
+
+\subsection{Source Code}
+\begin{lstlisting}[language=C]
+#include <stdio.h>
+#include <stdlib.h>
+#include <graphics.h>
+#include <conio.h>
+
+#define BGI_PATH   "C:\\TURBOC3\\BGI"
+#define LINE_COLOR WHITE
+#define SIGN(v)  (((v)>0)-((v)<0))
+
+void drawLineMidpoint(int x1, int y1, int x2, int y2)
+{
+    int absDx=abs(x2-x1), absDy=abs(y2-y1);
+    int xStep=SIGN(x2-x1), yStep=SIGN(y2-y1);
+    int steep=(absDy>absDx), tmp, d, x=x1, y=y1, i;
+    if (steep) {
+        tmp=absDx; absDx=absDy; absDy=tmp;
+        tmp=xStep; xStep=yStep; yStep=tmp;
+    }
+    d = 2*absDy - absDx;
+    for (i=0; i<=absDx; i++) {
+        steep ? putpixel(y,x,LINE_COLOR) : putpixel(x,y,LINE_COLOR);
+        if (d>=0) { y+=yStep; d+=2*(absDy-absDx); }
+        else        d+=2*absDy;
+        x+=xStep;
+    }
+}
+
+int main(void)
+{
+    int x1,y1,x2,y2;
+    printf("=== Midpoint Line Drawing Algorithm ===\n\n");
+    printf("Enter starting point (x1 y1) : "); scanf("%d %d",&x1,&y1);
+    printf("Enter ending   point (x2 y2) : "); scanf("%d %d",&x2,&y2);
+    int gd=DETECT, gm;
+    initgraph(&gd,&gm,BGI_PATH);
+    drawLineMidpoint(x1,y1,x2,y2);
+    getch(); closegraph();
+    return 0;
+}
+\end{lstlisting}
+
+\subsection{Output}
+\begin{verbatim}
+=== Midpoint Line Drawing Algorithm ===
+Enter starting point (x1 y1) : 100 100
+Enter ending  point (x2 y2) : 200 200
+\end{verbatim}
+
+% Save your screenshot as exp2_midpoint_line.png
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.6\textwidth]{exp2_midpoint_line.png}
+    \caption{Output of Midpoint Line Drawing Algorithm}
+\end{figure}
+
+\subsection{Discussion}
+The output correctly displays a rasterized line. Scaling the decision parameter by 2 avoids $0.5$ intervals while relying strictly on integer evaluation.
+
+\subsection{Conclusion}
+The Midpoint algorithm is visually identical to Bresenham's, evaluating positional error geometrically via integer arithmetic.
+
+\newpage
+
+% --------------------------------------------------------
+% EXPERIMENT 3
+% --------------------------------------------------------
+\section{Experiment 3: Midpoint Circle Drawing Algorithm}
+
+\subsection{Objective}
+To implement the Midpoint Circle algorithm utilizing 8-way symmetry to rasterize a complete circle.
+
+\subsection{Theory/Background}
+The Midpoint Circle algorithm exploits 8-way symmetry. Only one octant is computed; each point $(x,y)$ is reflected into all 8 octants. Starting at $(0, r)$, the initial decision parameter is $d = 1 - r$.
+
+\subsection{Source Code}
+\begin{lstlisting}[language=C]
+#include <stdio.h>
+#include <graphics.h>
+#include <conio.h>
+
+#define BGI_PATH    "C:\\TURBOC3\\BGI"
+#define CIRCLE_COLOR WHITE
+
+void plotSymmetricPoints(int xc, int yc, int x, int y)
+{
+    putpixel(xc+x, yc+y, CIRCLE_COLOR);
+    putpixel(xc-x, yc+y, CIRCLE_COLOR);
+    putpixel(xc+x, yc-y, CIRCLE_COLOR);
+    putpixel(xc-x, yc-y, CIRCLE_COLOR);
+    putpixel(xc+y, yc+x, CIRCLE_COLOR);
+    putpixel(xc-y, yc+x, CIRCLE_COLOR);
+    putpixel(xc+y, yc-x, CIRCLE_COLOR);
+    putpixel(xc-y, yc-x, CIRCLE_COLOR);
+}
+
+void drawCircleMidpoint(int xc, int yc, int r)
+{
+    int x=0, y=r, d=1-r;
+    plotSymmetricPoints(xc,yc,x,y);
+    while (x < y) {
+        x++;
+        if (d<0) d += 2*x+1;
+        else { y--; d += 2*x+1-2*y; }
+        plotSymmetricPoints(xc,yc,x,y);
+    }
+}
+
+int main(void)
+{
+    int xc,yc,r;
+    printf("=== Midpoint Circle Drawing Algorithm ===\n\n");
+    printf("Enter centre (xc yc) : "); scanf("%d %d",&xc,&yc);
+    printf("Enter radius (> 0)   : "); scanf("%d",&r);
+    int gd=DETECT, gm;
+    initgraph(&gd,&gm,BGI_PATH);
+    drawCircleMidpoint(xc,yc,r);
+    getch(); closegraph();
+    return 0;
+}
+\end{lstlisting}
+
+\subsection{Output}
+\begin{verbatim}
+=== Midpoint Circle Drawing Algorithm ===
+Enter centre (xc yc) : 300 300
+Enter radius (> 0)   : 100
+\end{verbatim}
+
+% Save your screenshot as exp3_midpoint_circle.png
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.6\textwidth]{exp3_midpoint_circle.png}
+    \caption{Output of Midpoint Circle Drawing Algorithm}
+\end{figure}
+
+\subsection{Discussion}
+The output renders a perfect rasterized circle. 8-way symmetry multiplies processing efficiency by a factor of 8.
+
+\subsection{Conclusion}
+The Midpoint circle algorithm is an efficient, integer-only method for rendering circles, avoiding square root operations entirely.
+
+\newpage
+
+% --------------------------------------------------------
+% EXPERIMENT 4
+% --------------------------------------------------------
+\section{Experiment 4: 2D Geometric Transformations}
+
+\subsection{Objective}
+To implement Translation, Rotation, and Scaling on user-defined polygons.
+
+\subsection{Theory/Background}
+\begin{itemize}
+    \item \textbf{Translation:} $x' = x + tx$,\ $y' = y + ty$
+    \item \textbf{Rotation (CCW from origin):}
+    \begin{equation} x' = x\cos\theta - y\sin\theta,\quad y' = x\sin\theta + y\cos\theta \end{equation}
+    \item \textbf{Scaling:} $x' = x \cdot sx$,\ $y' = y \cdot sy$
+\end{itemize}
+
+\subsection{Source Code}
+\begin{lstlisting}[language=C]
+#include <stdio.h>
+#include <math.h>
+#include <graphics.h>
+#include <conio.h>
+
+#define BGI_PATH     "C:\\TURBOC3\\BGI"
+#define MAX_VERTICES  20
+#define PI            3.14159265f
+
+void drawShape(int x[], int y[], int n, int color) {
+    int i; setcolor(color);
+    for(i=0;i<n-1;i++) line(x[i],y[i],x[i+1],y[i+1]);
+    line(x[n-1],y[n-1],x[0],y[0]);
+}
+
+void translate(int x[],int y[],int n,int tx,int ty,int xt[],int yt[]) {
+    int i;
+    for(i=0;i<n;i++){xt[i]=x[i]+tx; yt[i]=y[i]+ty;}
+}
+
+void rotate(int x[],int y[],int n,float ang,int xr[],int yr[]) {
+    int i; float r=ang*PI/180.0f,c=(float)cos(r),s=(float)sin(r);
+    for(i=0;i<n;i++){xr[i]=(int)(x[i]*c-y[i]*s); yr[i]=(int)(x[i]*s+y[i]*c);}
+}
+
+void scaleShape(int x[],int y[],int n,float sx,float sy,int xs[],int ys[]) {
+    int i;
+    for(i=0;i<n;i++){xs[i]=(int)(x[i]*sx); ys[i]=(int)(y[i]*sy);}
+}
+
+int main(void)
+{
+    int x[MAX_VERTICES],y[MAX_VERTICES];
+    int xt[MAX_VERTICES],yt[MAX_VERTICES];
+    int xr[MAX_VERTICES],yr[MAX_VERTICES];
+    int xs[MAX_VERTICES],ys[MAX_VERTICES];
+    int n,tx,ty,i; float angle,sx,sy;
+
+    printf("Enter number of vertices (3-%d): ",MAX_VERTICES); scanf("%d",&n);
+    for(i=0;i<n;i++){printf("  Vertex %d (x y): ",i+1); scanf("%d %d",&x[i],&y[i]);}
+    printf("Translation (tx ty): ");  scanf("%d %d",&tx,&ty);
+    printf("Rotation angle (deg): "); scanf("%f",&angle);
+    printf("Scale (sx sy): ");        scanf("%f %f",&sx,&sy);
+
+    int gd=DETECT,gm; initgraph(&gd,&gm,BGI_PATH);
+    drawShape(x,y,n,WHITE);
+    translate(x,y,n,tx,ty,xt,yt);  drawShape(xt,yt,n,GREEN);
+    rotate(x,y,n,angle,xr,yr);     drawShape(xr,yr,n,RED);
+    scaleShape(x,y,n,sx,sy,xs,ys); drawShape(xs,ys,n,YELLOW);
+    getch(); closegraph(); return 0;
+}
+\end{lstlisting}
+
+\subsection{Output}
+\begin{verbatim}
+Enter number of vertices: 3
+  Vertex 1: 100 100   Vertex 2: 200 100   Vertex 3: 200 200
+Translation (tx ty): 40 40
+Rotation angle: 30
+Scale (sx sy): 2 2
+\end{verbatim}
+
+% Save your screenshot as exp4_transformations.png
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.65\textwidth]{exp4_transformations.png}
+    \caption{Output for 2D Geometric Transformations (White=Original, Green=Translated, Red=Rotated, Yellow=Scaled)}
+\end{figure}
+
+\subsection{Discussion}
+The output correctly displays the original polygon (White) and three transformed versions: shifted (Green), rotated $30^\circ$ (Red), and scaled $\times 2$ (Yellow).
+
+\subsection{Conclusion}
+Geometric transformations effectively remap polygon vertices. Rotation and scaling are origin-dependent and function correctly via trigonometric and scaling matrices.
+
+\newpage
+
+% --------------------------------------------------------
+% EXPERIMENT 5
+% --------------------------------------------------------
+\section{Experiment 5: Shearing Transformation}
+
+\subsection{Objective}
+To implement X-axis and Y-axis shearing transformations on a 2D polygon.
+
+\subsection{Theory/Background}
+\begin{itemize}
+    \item \textbf{X-axis Shear:} $x' = x + shx \cdot y$,\ $y' = y$
+    \item \textbf{Y-axis Shear:} $x' = x$,\ $y' = y + shy \cdot x$
+\end{itemize}
+
+\subsection{Source Code}
+\begin{lstlisting}[language=C]
+#include <stdio.h>
+#include <graphics.h>
+#include <conio.h>
+
+#define BGI_PATH      "C:\\TURBOC3\\BGI"
+#define MAX_VERTICES   20
+
+void drawShape(int x[],int y[],int n,int color){
+    int i; setcolor(color);
+    for(i=0;i<n-1;i++) line(x[i],y[i],x[i+1],y[i+1]);
+    line(x[n-1],y[n-1],x[0],y[0]);
+}
+
+void shearX(int x[],int y[],int n,float shx,int xo[],int yo[]){
+    int i; for(i=0;i<n;i++){xo[i]=(int)(x[i]+shx*y[i]); yo[i]=y[i];}
+}
+
+void shearY(int x[],int y[],int n,float shy,int xo[],int yo[]){
+    int i; for(i=0;i<n;i++){xo[i]=x[i]; yo[i]=(int)(y[i]+shy*x[i]);}
+}
+
+int main(void)
+{
+    int x[MAX_VERTICES],y[MAX_VERTICES];
+    int xsx[MAX_VERTICES],ysx[MAX_VERTICES];
+    int xsy[MAX_VERTICES],ysy[MAX_VERTICES];
+    int n,i; float shx,shy;
+
+    printf("Enter number of vertices (3-%d): ",MAX_VERTICES); scanf("%d",&n);
+    for(i=0;i<n;i++){printf("  Vertex %d (x y): ",i+1); scanf("%d %d",&x[i],&y[i]);}
+    printf("X-shear factor: "); scanf("%f",&shx);
+    printf("Y-shear factor: "); scanf("%f",&shy);
+
+    int gd=DETECT,gm; initgraph(&gd,&gm,BGI_PATH);
+    drawShape(x,y,n,WHITE);
+    shearX(x,y,n,shx,xsx,ysx); drawShape(xsx,ysx,n,CYAN);
+    shearY(x,y,n,shy,xsy,ysy); drawShape(xsy,ysy,n,MAGENTA);
+    getch(); closegraph(); return 0;
+}
+\end{lstlisting}
+
+\subsection{Output}
+\begin{verbatim}
+Enter number of vertices: 3
+  Vertex 1: 100 100   Vertex 2: 200 100   Vertex 3: 200 200
+X-shear factor: 1
+Y-shear factor: 1.5
+\end{verbatim}
+
+% Save your screenshot as exp5_shearing.png
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.65\textwidth]{exp5_shearing.png}
+    \caption{Output for Shearing Transformation (White=Original, Cyan=X-Sheared, Magenta=Y-Sheared)}
+\end{figure}
+
+\subsection{Discussion}
+The algorithm correctly displaces vertices along each shear axis. An X-axis shear visibly tilts the shape horizontally.
+
+\subsection{Conclusion}
+Shearing introduces skew without altering area, fulfilling the theoretical principles of 2D shear operations.
+
+\newpage
+
+% --------------------------------------------------------
+% EXPERIMENT 6
+% --------------------------------------------------------
+\section{Experiment 6: Flood Fill Algorithm (4-Connected \& 8-Connected)}
+
+\subsection{Objective}
+To implement an iterative Flood Fill algorithm using 4-connected and 8-connected logic, avoiding recursion to prevent stack overflow.
+
+\subsection{Theory/Background}
+Flood fill replaces all pixels of \texttt{oldColor} connected to a seed with \texttt{newColor}.
+\begin{itemize}
+    \item \textbf{8-Connected:} Explores all 8 surrounding pixels (cardinal + diagonal).
+    \item \textbf{4-Connected:} Explores only 4 cardinal neighbors (N, S, E, W).
+\end{itemize}
+An explicit LIFO stack replaces recursion to avoid Turbo C stack overflow.
+
+\subsection{Source Code}
+\textbf{Experiment 6A: 8-Connected Flood Fill}
+\begin{lstlisting}[language=C]
+#include <stdio.h>
+#include <graphics.h>
+#include <conio.h>
+
+#define BGI_PATH    "C:\\TURBOC3\\BGI"
+#define SCREEN_W 640
+#define SCREEN_H 480
+#define RECT_X1 100
+#define RECT_Y1 100
+#define RECT_X2 200
+#define RECT_Y2 200
+#define STACK_SIZE 12000
+
+static int stackX[STACK_SIZE], stackY[STACK_SIZE], stackTop;
+static int dx8[]={1,-1,0,0,1,-1,1,-1};
+static int dy8[]={0,0,1,-1,1,-1,-1,1};
+
+void floodFill8(int sx,int sy,int old,int nw){
+    int x,y,nx,ny,i;
+    if(old==nw||getpixel(sx,sy)!=old) return;
+    putpixel(sx,sy,nw); stackTop=0;
+    stackX[stackTop]=sx; stackY[stackTop]=sy; stackTop++;
+    while(stackTop>0){
+        stackTop--; x=stackX[stackTop]; y=stackY[stackTop];
+        for(i=0;i<8;i++){
+            nx=x+dx8[i]; ny=y+dy8[i];
+            if(nx<0||nx>=SCREEN_W||ny<0||ny>=SCREEN_H) continue;
+            if(getpixel(nx,ny)==old){
+                putpixel(nx,ny,nw);
+                if(stackTop<STACK_SIZE){stackX[stackTop]=nx;stackY[stackTop]=ny;stackTop++;}
+            }
+        }
+    }
+}
+
+int main(void){
+    int sx,sy,fc,old;
+    printf("=== Flood Fill (8-Connected) ===\n");
+    printf("Seed (x y): "); scanf("%d %d",&sx,&sy);
+    printf("Fill colour (0-15): "); scanf("%d",&fc);
+    int gd=DETECT,gm; initgraph(&gd,&gm,BGI_PATH);
+    setcolor(WHITE); rectangle(RECT_X1,RECT_Y1,RECT_X2,RECT_Y2);
+    old=getpixel(sx,sy); floodFill8(sx,sy,old,fc);
+    getch(); closegraph(); return 0;
+}
+\end{lstlisting}
+
+\textbf{Experiment 6B: 4-Connected Flood Fill}
+\begin{lstlisting}[language=C]
+#include <stdio.h>
+#include <graphics.h>
+#include <conio.h>
+
+#define BGI_PATH    "C:\\TURBOC3\\BGI"
+#define SCREEN_W 640
+#define SCREEN_H 480
+#define RECT_X1 100
+#define RECT_Y1 100
+#define RECT_X2 200
+#define RECT_Y2 200
+#define STACK_SIZE 12000
+
+static int stackX[STACK_SIZE], stackY[STACK_SIZE], stackTop;
+static int dx4[]={1,-1,0,0};
+static int dy4[]={0,0,1,-1};
+
+void floodFill4(int sx,int sy,int old,int nw){
+    int x,y,nx,ny,i;
+    if(old==nw||getpixel(sx,sy)!=old) return;
+    putpixel(sx,sy,nw); stackTop=0;
+    stackX[stackTop]=sx; stackY[stackTop]=sy; stackTop++;
+    while(stackTop>0){
+        stackTop--; x=stackX[stackTop]; y=stackY[stackTop];
+        for(i=0;i<4;i++){
+            nx=x+dx4[i]; ny=y+dy4[i];
+            if(nx<0||nx>=SCREEN_W||ny<0||ny>=SCREEN_H) continue;
+            if(getpixel(nx,ny)==old){
+                putpixel(nx,ny,nw);
+                if(stackTop<STACK_SIZE){stackX[stackTop]=nx;stackY[stackTop]=ny;stackTop++;}
+            }
+        }
+    }
+}
+
+int main(void){
+    int sx,sy,fc,old;
+    printf("=== Flood Fill (4-Connected) ===\n");
+    printf("Seed (x y): "); scanf("%d %d",&sx,&sy);
+    printf("Fill colour (0-15): "); scanf("%d",&fc);
+    int gd=DETECT,gm; initgraph(&gd,&gm,BGI_PATH);
+    setcolor(WHITE); rectangle(RECT_X1,RECT_Y1,RECT_X2,RECT_Y2);
+    old=getpixel(sx,sy); floodFill4(sx,sy,old,fc);
+    getch(); closegraph(); return 0;
+}
+\end{lstlisting}
+
+\subsection{Output}
+\begin{verbatim}
+=== Flood Fill (8-Connected) ===   Seed: 120 120   Fill colour: 9
+=== Flood Fill (4-Connected) ===   Seed: 120 120   Fill colour: 9
+\end{verbatim}
+
+% Save screenshots as exp6a_flood8.png and exp6b_flood4.png
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.6\textwidth]{exp6a_flood8.png}
+    \vspace{0.4cm}
+    \includegraphics[width=0.6\textwidth]{exp6b_flood4.png}
+    \caption{8-Connected (top) and 4-Connected (bottom) Flood Fill Outputs}
+\end{figure}
+
+\subsection{Discussion}
+The 8-connected variant can leak through diagonal gaps while 4-connected stays within cardinal boundaries, providing tighter fill control.
+
+\subsection{Conclusion}
+An explicit LIFO stack is mandatory in Turbo C for flood fill. 4-connected is superior for constrained regions; 8-connected for broader fills.
+
+\newpage
+
+% --------------------------------------------------------
+% EXPERIMENT 7
+% --------------------------------------------------------
+\section{Experiment 7: Boundary Fill Algorithm (8-Connected \& 4-Connected)}
+
+\subsection{Objective}
+To implement an iterative Boundary Fill algorithm that colors enclosed regions up to a drawn boundary edge.
+
+\subsection{Theory/Background}
+Unlike Flood Fill, Boundary Fill paints pixels until a defined \texttt{boundaryColor} is reached. A pixel is filled if it is neither the boundary color nor already the fill color.
+
+\subsection{Source Code}
+\textbf{Experiment 7A: 8-Connected Boundary Fill}
+\begin{lstlisting}[language=C]
+#include <stdio.h>
+#include <graphics.h>
+#include <conio.h>
+
+#define BGI_PATH "C:\\TURBOC3\\BGI"
+#define SCREEN_W 640
+#define SCREEN_H 480
+#define RECT_X1 100
+#define RECT_Y1 100
+#define RECT_X2 200
+#define RECT_Y2 200
+#define STACK_SIZE 12000
+
+static int stackX[STACK_SIZE],stackY[STACK_SIZE],stackTop;
+static int dx8[]={1,-1,0,0,1,-1,1,-1};
+static int dy8[]={0,0,1,-1,1,-1,-1,1};
+
+void boundaryFill8(int sx,int sy,int fc,int bc){
+    int x,y,nx,ny,i,pc;
+    pc=getpixel(sx,sy);
+    if(pc==bc||pc==fc) return;
+    putpixel(sx,sy,fc); stackTop=0;
+    stackX[stackTop]=sx; stackY[stackTop]=sy; stackTop++;
+    while(stackTop>0){
+        stackTop--; x=stackX[stackTop]; y=stackY[stackTop];
+        for(i=0;i<8;i++){
+            nx=x+dx8[i]; ny=y+dy8[i];
+            if(nx<0||nx>=SCREEN_W||ny<0||ny>=SCREEN_H) continue;
+            pc=getpixel(nx,ny);
+            if(pc!=bc&&pc!=fc){
+                putpixel(nx,ny,fc);
+                if(stackTop<STACK_SIZE){stackX[stackTop]=nx;stackY[stackTop]=ny;stackTop++;}
+            }
+        }
+    }
+}
+
+int main(void){
+    int sx,sy,fc,bc;
+    printf("=== Boundary Fill (8-Connected) ===\n");
+    printf("Seed (x y): "); scanf("%d %d",&sx,&sy);
+    printf("Boundary colour (0-15): "); scanf("%d",&bc);
+    printf("Fill colour    (0-15): "); scanf("%d",&fc);
+    int gd=DETECT,gm; initgraph(&gd,&gm,BGI_PATH);
+    setcolor(bc); rectangle(RECT_X1,RECT_Y1,RECT_X2,RECT_Y2);
+    boundaryFill8(sx,sy,fc,bc);
+    getch(); closegraph(); return 0;
+}
+\end{lstlisting}
+
+\textbf{Experiment 7B: 4-Connected Boundary Fill}
+\begin{lstlisting}[language=C]
+#include <stdio.h>
+#include <graphics.h>
+#include <conio.h>
+
+#define BGI_PATH "C:\\TURBOC3\\BGI"
+#define SCREEN_W 640
+#define SCREEN_H 480
+#define RECT_X1 100
+#define RECT_Y1 100
+#define RECT_X2 200
+#define RECT_Y2 200
+#define STACK_SIZE 12000
+
+static int stackX[STACK_SIZE],stackY[STACK_SIZE],stackTop;
+static int dx4[]={1,-1,0,0};
+static int dy4[]={0,0,1,-1};
+
+void boundaryFill4(int sx,int sy,int fc,int bc){
+    int x,y,nx,ny,i,pc;
+    pc=getpixel(sx,sy);
+    if(pc==bc||pc==fc) return;
+    putpixel(sx,sy,fc); stackTop=0;
+    stackX[stackTop]=sx; stackY[stackTop]=sy; stackTop++;
+    while(stackTop>0){
+        stackTop--; x=stackX[stackTop]; y=stackY[stackTop];
+        for(i=0;i<4;i++){
+            nx=x+dx4[i]; ny=y+dy4[i];
+            if(nx<0||nx>=SCREEN_W||ny<0||ny>=SCREEN_H) continue;
+            pc=getpixel(nx,ny);
+            if(pc!=bc&&pc!=fc){
+                putpixel(nx,ny,fc);
+                if(stackTop<STACK_SIZE){stackX[stackTop]=nx;stackY[stackTop]=ny;stackTop++;}
+            }
+        }
+    }
+}
+
+int main(void){
+    int sx,sy,fc,bc;
+    printf("=== Boundary Fill (4-Connected) ===\n");
+    printf("Seed (x y): "); scanf("%d %d",&sx,&sy);
+    printf("Boundary colour (0-15): "); scanf("%d",&bc);
+    printf("Fill colour    (0-15): "); scanf("%d",&fc);
+    int gd=DETECT,gm; initgraph(&gd,&gm,BGI_PATH);
+    setcolor(bc); rectangle(RECT_X1,RECT_Y1,RECT_X2,RECT_Y2);
+    boundaryFill4(sx,sy,fc,bc);
+    getch(); closegraph(); return 0;
+}
+\end{lstlisting}
+
+\subsection{Output}
+\begin{verbatim}
+=== Boundary Fill (8-Connected) ===
+Seed: 120 120   Boundary: 15   Fill: 9
+
+=== Boundary Fill (4-Connected) ===
+Seed: 120 120   Boundary: 15   Fill: 9
+\end{verbatim}
+
+% Save screenshots as exp7a_boundary8.png and exp7b_boundary4.png
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.6\textwidth]{exp7a_boundary8.png}
+    \vspace{0.4cm}
+    \includegraphics[width=0.6\textwidth]{exp7b_boundary4.png}
+    \caption{8-Connected (top) and 4-Connected (bottom) Boundary Fill Outputs}
+\end{figure}
+
+\subsection{Discussion}
+Boundary Fill stops at the drawn border color rather than checking an interior color, making it effective for multi-colored interiors.
+
+\subsection{Conclusion}
+The paint-before-push approach guarantees termination and prevents stack overflow.
+
+\newpage
+
+% --------------------------------------------------------
+% EXPERIMENT 8
+% --------------------------------------------------------
+\section{Experiment 8: Cubic B\'{e}zier Curve}
+
+\subsection{Objective}
+To implement and rasterize a Cubic B\'{e}zier Curve using control point parametric equations.
+
+\subsection{Theory/Background}
+A cubic B\'{e}zier curve is defined by four control points $P_0, P_1, P_2, P_3$ and parameter $t \in [0,1]$:
+\begin{equation}
+B(t) = (1-t)^3 P_0 + 3(1-t)^2 t\, P_1 + 3(1-t)t^2 P_2 + t^3 P_3
+\end{equation}
+$P_0$ and $P_3$ are the endpoints; $P_1$ and $P_2$ are control handles.
+
+\subsection{Source Code}
+\begin{lstlisting}[language=C]
+#include <stdio.h>
+#include <graphics.h>
+#include <conio.h>
+
+#define BGI_PATH      "C:\\TURBOC3\\BGI"
+#define BEZIER_STEPS  1000
+
+void drawBezier(int x0,int y0,int x1,int y1,int x2,int y2,int x3,int y3)
+{
+    int i,px,py;
+    float t,u,u2,u3,t2,t3;
+    setcolor(CYAN);
+    for(i=0;i<=BEZIER_STEPS;i++){
+        t=(float)i/BEZIER_STEPS; u=1.0f-t;
+        u2=u*u; u3=u2*u; t2=t*t; t3=t2*t;
+        px=(int)(u3*x0+3*u2*t*x1+3*u*t2*x2+t3*x3);
+        py=(int)(u3*y0+3*u2*t*y1+3*u*t2*y2+t3*y3);
+        if(px<0||px>=getmaxx()||py<0||py>=getmaxy()) continue;
+        putpixel(px,py,CYAN);
+    }
+}
+
+int main(void)
+{
+    int x0,y0,x1,y1,x2,y2,x3,y3;
+    printf("=== Cubic Bezier Curve ===\n\n");
+    printf("P0 (x y): "); scanf("%d %d",&x0,&y0);
+    printf("P1 (x y): "); scanf("%d %d",&x1,&y1);
+    printf("P2 (x y): "); scanf("%d %d",&x2,&y2);
+    printf("P3 (x y): "); scanf("%d %d",&x3,&y3);
+    int gd=DETECT,gm; initgraph(&gd,&gm,BGI_PATH);
+    drawBezier(x0,y0,x1,y1,x2,y2,x3,y3);
+    setcolor(DARKGRAY);
+    line(x0,y0,x1,y1); line(x1,y1,x2,y2); line(x2,y2,x3,y3);
+    setcolor(GREEN);  circle(x0,y0,3); circle(x3,y3,3);
+    setcolor(YELLOW); circle(x1,y1,3); circle(x2,y2,3);
+    getch(); closegraph(); return 0;
+}
+\end{lstlisting}
+
+\subsection{Output}
+% Save your screenshot as exp8_bezier.png
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.65\textwidth]{exp8_bezier.png}
+    \caption{Output for Cubic B\'{e}zier Curve (Cyan=Curve, Green=Endpoints, Yellow=Handles, Gray=Control Polygon)}
+\end{figure}
+
+\subsection{Discussion}
+The curve renders anchored to $P_0$ and $P_3$, curving towards $P_1$ and $P_2$. Using 1000 steps produces a smooth arc.
+
+\subsection{Conclusion}
+Parametric polynomial evaluation over fractional $t$-increments handles curve geometry precisely, forming a foundation for vector graphics.
+
+\newpage
+
+% --------------------------------------------------------
+% EXPERIMENT 9
+% --------------------------------------------------------
+\section{Experiment 9: Animation --- Man Walking on a Rainy Day}
+
+\subsection{Objective}
+To create a looping animation combining static backgrounds, translating components, and phase-switched character animation via double-buffered page flipping.
+
+\subsection{Theory/Background}
+Double-buffered page flipping (\texttt{setactivepage}/\texttt{setvisualpage}) eliminates flicker. Rain streaks cycle downward each frame; the stick-figure man traverses left with a 2-phase leg cycle, wrapping at the screen edge.
+
+\subsection{Source Code}
+\begin{lstlisting}[language=C]
+#include <graphics.h>
+#include <conio.h>
+#include <dos.h>
+
+#define BGI_PATH        "C:\\TURBOC3\\BGI"
+#define SCREEN_W 640
+#define SCREEN_H 480
+#define GROUND_Y 400
+#define MAN_START_X 620
+#define MAN_Y       342
+#define MAN_STEP      2
+#define MAN_WRAP_EXIT  -60
+#define MAN_WRAP_ENTRY 660
+#define RAIN_ROW_GAP  18
+#define RAIN_COL_GAP  25
+#define RAIN_SPEED     3
+#define FRAME_DELAY   35
+#define LEG_FRAMES     8
+
+void drawBackground(void){
+    setfillstyle(SOLID_FILL,BLACK); bar(0,0,SCREEN_W-1,GROUND_Y-1);
+    setcolor(WHITE); setfillstyle(SOLID_FILL,WHITE); fillellipse(580,55,28,28);
+    setcolor(DARKGRAY); setfillstyle(SOLID_FILL,DARKGRAY);
+    fillellipse(80,85,38,20); fillellipse(118,72,48,26); fillellipse(158,85,38,20);
+    fillellipse(300,65,42,22); fillellipse(342,52,52,28); fillellipse(384,65,42,22);
+    fillellipse(530,58,38,20); fillellipse(566,46,48,26); fillellipse(606,58,38,20);
+    setfillstyle(SOLID_FILL,DARKGRAY); bar(0,GROUND_Y,SCREEN_W-1,SCREEN_H-1);
+    setcolor(LIGHTGRAY);
+    line(0,GROUND_Y,SCREEN_W-1,GROUND_Y); line(0,SCREEN_H-2,SCREEN_W-1,SCREEN_H-2);
+    setcolor(WHITE); line(0,440,SCREEN_W-1,440);
+}
+
+void drawRain(int off){
+    int col,row,rx,ry; setcolor(LIGHTBLUE);
+    for(row=0;row<GROUND_Y;row+=RAIN_ROW_GAP)
+        for(col=0;col<SCREEN_W+RAIN_COL_GAP;col+=RAIN_COL_GAP){
+            rx=col-(off%RAIN_COL_GAP); ry=(row+off)%GROUND_Y;
+            line(rx,ry,rx-4,ry+12);
+        }
+}
+
+void drawMan(int mx,int my,int lp){
+    setcolor(BROWN); line(mx-14,my+18,mx-14,my-22);
+    setcolor(RED); setfillstyle(SOLID_FILL,RED); fillellipse(mx-14,my-22,28,10);
+    setcolor(DARKGRAY); arc(mx-14,my-22,0,180,28); line(mx-42,my-22,mx+14,my-22);
+    setcolor(WHITE); circle(mx,my-14,10); line(mx,my-4,mx,my+30);
+    line(mx,my+8,mx-14,my+18);
+    lp==0 ? line(mx,my+8,mx+16,my+22) : line(mx,my+8,mx+10,my+26);
+    if(lp==0){line(mx,my+30,mx-14,my+58); line(mx,my+30,mx+10,my+58);}
+    else     {line(mx,my+30,mx-8, my+58); line(mx,my+30,mx+14,my+58);}
+}
+
+int main(void){
+    int manX=MAN_START_X,rainOff=0,lp=0,frame=0,page=0;
+    int gd=DETECT,gm; initgraph(&gd,&gm,BGI_PATH);
+    while(!kbhit()){
+        page=1-page; setactivepage(page); cleardevice();
+        drawBackground(); drawRain(rainOff); drawMan(manX,MAN_Y,lp);
+        setvisualpage(page);
+        manX-=MAN_STEP;
+        rainOff=(rainOff+RAIN_SPEED)%(RAIN_ROW_GAP*RAIN_COL_GAP);
+        frame=(frame+1)%(LEG_FRAMES*2);
+        if(frame%LEG_FRAMES==0) lp=1-lp;
+        if(manX<MAN_WRAP_EXIT) manX=MAN_WRAP_ENTRY;
+        delay(FRAME_DELAY);
+    }
+    getch(); closegraph(); return 0;
+}
+\end{lstlisting}
+
+\subsection{Output}
+% Save your screenshot as exp9_walking.png
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.75\textwidth]{exp9_walking.png}
+    \caption{Output Frame for Man Walking on a Rainy Day Animation}
+\end{figure}
+
+\subsection{Discussion}
+Page flipping ensures no partial frames are ever displayed. Rain and leg-phase state variables advance each frame for smooth animation.
+
+\subsection{Conclusion}
+Double-buffering combined with state variable logic produces flicker-free animations in C BGI graphics pipelines.
+
+\newpage
+
+% --------------------------------------------------------
+% EXPERIMENT 10
+% --------------------------------------------------------
+\section{Experiment 10: Animation --- Car Moving on Road}
+
+\subsection{Objective}
+To implement a multi-layered scene with a double-buffered vehicle animation.
+
+\subsection{Theory/Background}
+The scene uses a layered back-to-front draw order (sky $\to$ mountains $\to$ ground $\to$ houses $\to$ trees $\to$ road $\to$ car). Road dashes scroll backward to simulate vehicle velocity. The car wraps from the right edge back to the left.
+
+\subsection{Source Code}
+\begin{lstlisting}[language=C]
+#include <graphics.h>
+#include <conio.h>
+#include <dos.h>
+
+#define BGI_PATH    "C:\\TURBOC3\\BGI"
+#define SCREEN_W  640
+#define SCREEN_H  480
+#define ROAD_TOP  360
+#define GROUND_TOP 320
+#define CAR_START_X -120
+#define CAR_Y       (ROAD_TOP+14)
+#define CAR_STEP    3
+#define CAR_WRAP    660
+#define DASH_SPACE  50
+#define DASH_LEN    28
+#define DASH_Y      420
+#define DASH_SPEED  3
+#define FRAME_MS    25
+
+void drawSky(void){
+    setcolor(CYAN); setfillstyle(SOLID_FILL,CYAN); bar(0,0,SCREEN_W-1,GROUND_TOP-1);
+    setcolor(YELLOW); setfillstyle(SOLID_FILL,YELLOW); fillellipse(570,55,30,30);
+    setcolor(YELLOW);
+    line(570,15,570,5); line(610,30,620,22); line(620,70,630,78);
+    line(570,90,570,100); line(530,70,520,78); line(520,30,510,22);
+}
+
+void drawMountains(void){
+    setcolor(DARKGRAY); setfillstyle(SOLID_FILL,DARKGRAY);
+    {int p[]={0,GROUND_TOP,110,120,220,GROUND_TOP}; fillpoly(3,p);}
+    {int p[]={160,GROUND_TOP,310,80,460,GROUND_TOP}; fillpoly(3,p);}
+    {int p[]={400,GROUND_TOP,540,110,680,GROUND_TOP}; fillpoly(3,p);}
+    setcolor(WHITE); setfillstyle(SOLID_FILL,WHITE);
+    {int p[]={90,143,110,120,130,143}; fillpoly(3,p);}
+    {int p[]={288,103,310,80,332,103}; fillpoly(3,p);}
+    {int p[]={518,133,540,110,562,133}; fillpoly(3,p);}
+}
+
+void drawGround(void){
+    setcolor(GREEN); setfillstyle(SOLID_FILL,GREEN);
+    bar(0,GROUND_TOP,SCREEN_W-1,ROAD_TOP-1);
+}
+
+void drawHouse(int hx,int hy){
+    int w=55,h=45;
+    setcolor(LIGHTGRAY); setfillstyle(SOLID_FILL,LIGHTGRAY); bar(hx,hy-h,hx+w,hy);
+    setcolor(BROWN); setfillstyle(SOLID_FILL,BROWN);
+    {int p[]={hx-4,hy-h,hx+w/2,hy-h-28,hx+w+4,hy-h}; fillpoly(3,p);}
+    setcolor(DARKGRAY); setfillstyle(SOLID_FILL,DARKGRAY); bar(hx+20,hy-24,hx+35,hy);
+    setcolor(CYAN); setfillstyle(SOLID_FILL,CYAN); bar(hx+5,hy-36,hx+16,hy-26);
+    setcolor(DARKGRAY); line(hx+10,hy-36,hx+10,hy-26); line(hx+5,hy-31,hx+16,hy-31);
+}
+
+void drawTree(int tx,int ty){
+    setcolor(BROWN); setfillstyle(SOLID_FILL,BROWN); bar(tx-4,ty-30,tx+4,ty);
+    setcolor(GREEN); setfillstyle(SOLID_FILL,GREEN);
+    fillellipse(tx,ty-42,18,18); fillellipse(tx-8,ty-34,14,14); fillellipse(tx+8,ty-34,14,14);
+}
+
+void drawRoad(int off){
+    int i,x;
+    setcolor(DARKGRAY); setfillstyle(SOLID_FILL,DARKGRAY); bar(0,ROAD_TOP,SCREEN_W-1,SCREEN_H-1);
+    setcolor(WHITE); line(0,ROAD_TOP,SCREEN_W-1,ROAD_TOP); line(0,SCREEN_H-2,SCREEN_W-1,SCREEN_H-2);
+    for(i=-DASH_SPACE;i<SCREEN_W+DASH_SPACE;i+=DASH_SPACE){
+        x=i-(off%DASH_SPACE);
+        if(x<-DASH_SPACE) x+=SCREEN_W+DASH_SPACE;
+        setcolor(WHITE); line(x,DASH_Y,x+DASH_LEN,DASH_Y);
+    }
+}
+
+void drawCar(int cx,int cy){
+    setcolor(RED); setfillstyle(SOLID_FILL,RED);
+    bar(cx,cy+18,cx+110,cy+48); bar(cx+18,cy,cx+88,cy+20);
+    setcolor(LIGHTBLUE); setfillstyle(SOLID_FILL,LIGHTBLUE);
+    bar(cx+66,cy+2,cx+86,cy+18); bar(cx+20,cy+2,cx+44,cy+18);
+    setcolor(BLACK); setfillstyle(SOLID_FILL,BLACK);
+    fillellipse(cx+22,cy+48,17,10); fillellipse(cx+88,cy+48,17,10);
+    fillellipse(cx+22,cy+52,14,14); fillellipse(cx+88,cy+52,14,14);
+    setcolor(DARKGRAY); setfillstyle(SOLID_FILL,DARKGRAY);
+    fillellipse(cx+22,cy+52,6,6); fillellipse(cx+88,cy+52,6,6);
+    setcolor(WHITE); setfillstyle(SOLID_FILL,WHITE); fillellipse(cx+107,cy+30,5,4);
+    setcolor(LIGHTRED); setfillstyle(SOLID_FILL,LIGHTRED); fillellipse(cx+3,cy+30,5,4);
+    setcolor(LIGHTGRAY); setfillstyle(SOLID_FILL,LIGHTGRAY);
+    bar(cx+100,cy+40,cx+112,cy+46); bar(cx-2,cy+40,cx+10,cy+46);
+}
+
+int main(void){
+    int carX=CAR_START_X,dashOff=0,page=0;
+    int gd=DETECT,gm; initgraph(&gd,&gm,BGI_PATH);
+    while(!kbhit()){
+        page=1-page; setactivepage(page); cleardevice();
+        drawSky(); drawMountains(); drawGround();
+        drawHouse(20,ROAD_TOP-2); drawHouse(150,ROAD_TOP-2);
+        drawHouse(310,ROAD_TOP-2); drawHouse(470,ROAD_TOP-2);
+        drawTree(8,ROAD_TOP-2); drawTree(120,ROAD_TOP-2);
+        drawTree(240,ROAD_TOP-2); drawTree(400,ROAD_TOP-2);
+        drawTree(445,ROAD_TOP-2); drawTree(560,ROAD_TOP-2); drawTree(620,ROAD_TOP-2);
+        drawRoad(dashOff); drawCar(carX,CAR_Y);
+        setvisualpage(page);
+        carX+=CAR_STEP; dashOff=(dashOff+DASH_SPEED)%(DASH_SPACE*2);
+        if(carX>CAR_WRAP) carX=CAR_START_X;
+        delay(FRAME_MS);
+    }
+    getch(); closegraph(); return 0;
+}
+\end{lstlisting}
+
+\subsection{Output}
+% Save two frame screenshots as exp10_car_frame1.png and exp10_car_frame2.png
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.75\textwidth]{exp10_car_frame1.png}
+    \vspace{0.4cm}
+    \includegraphics[width=0.75\textwidth]{exp10_car_frame2.png}
+    \caption{Output Frames for Car Moving on Road Animation}
+\end{figure}
+
+\subsection{Discussion}
+The layered render order simulates depth. Scrolling road dashes reinforce the illusion of vehicle velocity against a stationary background.
+
+\subsection{Conclusion}
+Double-buffering with strict back-to-front rendering produces smooth, convincing animations using simple BGI primitives.
+
+\end{document}
